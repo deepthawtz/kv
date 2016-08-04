@@ -1,4 +1,4 @@
-// Copyright © 2016 Dylan Clendenin
+// Copyright © 2016 NAME HERE <EMAIL ADDRESS>
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,50 +17,33 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"strings"
 
-	"github.com/deepthawtz/kv/store"
 	"github.com/spf13/cobra"
 )
 
 var (
-	namespace string
-	deployEnv string
+	help = "must supply key/values in form of KEY=VALUE"
 )
 
-// getCmd represents the get command
-var getCmd = &cobra.Command{
-	Use:   "get [KEY]",
-	Short: "get ENV key values for a give app/namespace",
-	Long:  `get all keys or specific KEY if provided`,
-	Run:   get,
+// setCmd represents the set command
+var setCmd = &cobra.Command{
+	Use:   "set KEY=VAUE [KEY=VALUE...]",
+	Short: "set ENV key values for a give app/namespace",
+	Long:  `set as many key/value pairs as you wish`,
+	Run:   set,
 }
 
 func init() {
-	RootCmd.AddCommand(getCmd)
+	RootCmd.AddCommand(setCmd)
 
 	getCmd.Flags().StringVarP(&namespace, "app", "a", "", "app/namespace to get ENV vars for")
 	getCmd.Flags().StringVarP(&deployEnv, "env", "e", "", "environment to get ENV vars for (e.g., stage, production)")
 }
 
-func get(cmd *cobra.Command, args []string) {
-	if namespace == "" || deployEnv == "" {
-		fmt.Println("must supply --app and --env")
+func set(cmd *cobra.Command, args []string) {
+	if len(args) == 0 {
+		fmt.Println(help)
 		os.Exit(-1)
 	}
 
-	client := store.NewConsulClient()
-	kv := client.KV()
-	kvpairs, _, err := kv.List(strings.Join([]string{"/env", namespace, deployEnv}, "/"), nil)
-	if err != nil {
-		panic(err)
-	}
-
-	var kvs []store.KVPair
-	for _, kvp := range kvpairs {
-		kvs = append(kvs, KVPair{Key: kvp.Key, Value: string(kvp.Value)})
-	}
-	for _, x := range kvs {
-		fmt.Println(x)
-	}
 }
