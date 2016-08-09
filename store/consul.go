@@ -21,7 +21,7 @@ func (kvp *KVPair) String() string {
 }
 
 // NewConsulClient returns a consul client
-func NewConsulClient() *consul.Client {
+func NewConsulClient() *consul.KV {
 	config := consul.Config{
 		Address: viper.GetString("consul.host"),
 		Scheme:  viper.GetString("consul.scheme"),
@@ -31,5 +31,5 @@ func NewConsulClient() *consul.Client {
 		panic(err)
 	}
 
-	return client
+	return client.KV()
 }

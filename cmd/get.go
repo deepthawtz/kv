@@ -20,6 +20,7 @@ import (
 	"strings"
 
 	"github.com/deepthawtz/kv/store"
+	consul "github.com/hashicorp/consul/api"
 	"github.com/spf13/cobra"
 )
 
@@ -33,7 +34,7 @@ var getCmd = &cobra.Command{
 	Use:   "get [KEY]",
 	Short: "get ENV key values for a give app/namespace",
 	Long:  `get all keys or specific KEY if provided`,
-	Run:   get,
+	Run:   Get,
 }
 
 func init() {
@@ -43,24 +44,60 @@ func init() {
 	getCmd.Flags().StringVarP(&deployEnv, "env", "e", "", "environment to get ENV vars for (e.g., stage, production)")
 }
 
-func get(cmd *cobra.Command, args []string) {
+// Get fetches key values
+func Get(cmd *cobra.Command, args []string) {
 	if namespace == "" || deployEnv == "" {
 		fmt.Println("must supply --app and --env")
 		os.Exit(-1)
 	}
 
 	client := store.NewConsulClient()
-	kv := client.KV()
-	kvpairs, _, err := kv.List(strings.Join([]string{"/env", namespace, deployEnv}, "/"), nil)
+	kvs, err := get(client, args...)
 	if err != nil {
-		panic(err)
+		fmt.Println(err)
+		os.Exit(-1)
 	}
 
-	var kvs []store.KVPair
-	for _, kvp := range kvpairs {
-		kvs = append(kvs, KVPair{Key: kvp.Key, Value: string(kvp.Value)})
-	}
 	for _, x := range kvs {
 		fmt.Println(x)
 	}
+}
+
+func get(client *consul.KV, args ...string) ([]*store.KVPair, error) {
+	var (
+		k       string
+		kvpairs consul.KVPairs
+		kvpair  *consul.KVPair
+		err     error
+	)
+
+	if len(args) == 0 {
+		fmt.Println("no args, getting all key/values")
+		k = strings.Join([]string{"env", namespace, deployEnv}, "/")
+		kvpairs, _, err = client.List(k, nil)
+	} else {
+		fmt.Println("args, getting just key/value for args")
+		for _, x := range args {
+			k = strings.Join([]string{"env", namespace, deployEnv, x}, "/")
+			kvpair, _, err = client.Get(k, nil)
+			if kvpair != nil {
+				kvpairs = append(kvpairs, kvpair)
+			}
+		}
+	}
+
+	if err != nil {
+		return nil, err
+	}
+
+	var kvs []*store.KVPair
+	for _, kvp := range kvpairs {
+		if len(kvp.Value) > 0 {
+			v := string(kvp.Value)
+			kvs = append(kvs, &store.KVPair{Key: kvp.Key, Value: v})
+		}
+	}
+	fmt.Printf("%d key/values found at %s\n", len(kvs), k)
+
+	return kvs, nil
 }
