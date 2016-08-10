@@ -31,8 +31,8 @@ var (
 // getCmd represents the get command
 var getCmd = &cobra.Command{
 	Use:   "get [KEY]",
-	Short: "get ENV key values for a given key prefix (e.g., env/myapp/stage)",
-	Long:  `get all keys or specific KEY if provided`,
+	Short: "get key/value pairs for a given key prefix (e.g., env/myapp/stage)",
+	Long:  `get all key/value pairs or for specific key if provided`,
 	Run:   Get,
 }
 

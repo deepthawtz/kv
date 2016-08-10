@@ -27,8 +27,8 @@ var cfgFile string
 // RootCmd represents the base command when called without any subcommands
 var RootCmd = &cobra.Command{
 	Use:   "kv",
-	Short: "kv is tool for managing ENV vars in consul",
-	Long:  `Use kv to read, set or update ENV vars`,
+	Short: "kv is tool for managing key/value pairs in consul",
+	Long:  `Use kv to read, set or update key/value pairs in consul`,
 }
 
 // Execute adds all child commands to the root command sets flags appropriately.

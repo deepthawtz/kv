@@ -31,7 +31,7 @@ var (
 // setCmd represents the set command
 var setCmd = &cobra.Command{
 	Use:   "set KEY=VAUE [KEY=VALUE...]",
-	Short: "set ENV key values for a given key prefix (e.g., env/myapp/stage)",
+	Short: "set key/value pairs for a given key prefix (e.g., env/myapp/stage)",
 	Long:  `set as many key/value pairs as you wish`,
 	Run:   Set,
 }
