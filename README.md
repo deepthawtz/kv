@@ -41,7 +41,8 @@ kv get --prefix env/myapp/stage THING_*
 
 ### set
 
-set provided key/value pair(s) at a given prefix
+set provided key/value pair(s) at a given prefix (*NOTE:* in Consul 0.7 this
+can be performed in a single transaction)
 ```
 kv set --prefix env/myapp/stage YO=123 THING_TOKEN=xcnvbxcmhdf COOL_FACTOR=9000
 ```
