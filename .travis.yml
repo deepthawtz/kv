@@ -3,8 +3,7 @@ go:
 - 1.6
 
 script:
-  make install
-  make test
+  make install && make test
 
 before_deploy:
   make release
