@@ -17,6 +17,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"regexp"
 	"strings"
 
 	"github.com/deepthawtz/kv/store"
@@ -63,21 +64,55 @@ func Get(cmd *cobra.Command, args []string) {
 
 func get(client *consul.KV, args ...string) ([]*store.KVPair, error) {
 	var (
-		k       string
-		kvpairs consul.KVPairs
-		kvpair  *consul.KVPair
-		err     error
+		k         string
+		wildcards []string
+		specific  []string
+		kvpairs   consul.KVPairs
+		all       consul.KVPairs
+		kvpair    *consul.KVPair
+		err       error
 	)
 
 	if len(args) == 0 {
-		k = prefix
-		kvpairs, _, err = client.List(k, nil)
+		kvpairs, _, err = client.List(prefix, nil)
 	} else {
 		for _, x := range args {
-			k = strings.Join([]string{prefix, x}, "/")
-			kvpair, _, err = client.Get(k, nil)
-			if kvpair != nil {
-				kvpairs = append(kvpairs, kvpair)
+			if strings.Contains(x, "*") {
+				wildcards = append(wildcards, x)
+			} else {
+				specific = append(specific, x)
+			}
+		}
+
+		if len(wildcards) > 0 {
+			all, _, err = client.List(prefix, nil)
+			for _, wc := range wildcards {
+				wc = strings.Replace(wc, "*", ".*", -1)
+				for _, k := range all {
+					m, err := regexp.MatchString(wc, k.Key)
+					if err != nil {
+						return nil, err
+					}
+					if m {
+						kvpairs = append(kvpairs, k)
+					}
+				}
+			}
+
+			for _, s := range specific {
+				k = strings.Join([]string{prefix, s}, "/")
+				kvpair, _, err = client.Get(k, nil)
+				if kvpair != nil {
+					kvpairs = append(kvpairs, kvpair)
+				}
+			}
+		} else {
+			for _, x := range specific {
+				k = strings.Join([]string{prefix, x}, "/")
+				kvpair, _, err = client.Get(k, nil)
+				if kvpair != nil {
+					kvpairs = append(kvpairs, kvpair)
+				}
 			}
 		}
 	}

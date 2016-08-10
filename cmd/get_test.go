@@ -44,16 +44,21 @@ func TestGet(t *testing.T) {
 	_, _ = kv.Put(&consul.KVPair{Key: k, Value: []byte("123")}, nil)
 	k = strings.Join([]string{prefix, "THING_ID"}, "/")
 	_, _ = kv.Put(&consul.KVPair{Key: k, Value: []byte("abc123")}, nil)
+	k = strings.Join([]string{prefix, "THING_TOKEN"}, "/")
+	_, _ = kv.Put(&consul.KVPair{Key: k, Value: []byte("yabbadabba")}, nil)
 
 	cases := []struct {
 		args  []string
 		count int
 	}{
-		{args: []string{}, count: 2},
+		{args: []string{}, count: 3},
 		{args: []string{"YOOOOOOOOOOOO"}, count: 0},
 		{args: []string{"YO"}, count: 1},
 		{args: []string{"YO", "THING_ID"}, count: 2},
 		{args: []string{"YO", "THING_ID", "EXTRA"}, count: 2},
+		{args: []string{"THING_*"}, count: 2},
+		{args: []string{"THING_*", "YO"}, count: 3},
+		{args: []string{"*"}, count: 3},
 	}
 
 	for _, test := range cases {
