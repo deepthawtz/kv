@@ -1,6 +1,19 @@
----
 language: go
 go:
-  - 1.4
-  - 1.5
-  - 1.6
+- 1.4
+- 1.5
+- 1.6
+
+deploy:
+  provider: releases
+  api_key:
+    secure: Ba73wfl90LIa+Mqlsf8oSXJ4gXYS7hVikqUSHDdfLZc8Azbd55XjoV3/K3lv1XRpB6GtzPatW9kqZDnpNajKDA3ju11pz1yqRCaHAdStAOlnyT7Ppiex67HcrI6TO2D1RRWm9WRKhq0qOuSQcWfxJMScMZVMmZOJNI13ty5r+4RzAOKHLt/7fCfi3vcBaFd82BOC6745wjXk03a9rVMqR25KjN67uYaXi2/6alYQijNBQ/uEm+Isuaiyob5t9UiNFdmVE0inhCn0DA6tYzCgyKygiWglP2P6ichEfH+hW41ClJGi1TVG5xyIbC30oX9OOdjK+375k5CMiWTcbneK9kVaheo30pMJByH79BVEOW9HQ0QCP2zX3vvRwV6fvlZ8a6DM1szJKL6nusiIlRZFn505Pj9/yvgUBeguNyb6FAR6h5vZ7gEZ+lbI+Psc4j4jTb7EO9sBfProGQ/DINpjDhqv2l5FbSAm78G7NcCot5jRCz0sVgkbPbY4jGQ8LM4CBkRKJbVehy9Di0uVzrmj/07oJDplvequkUK145bnZJgRW0qapFTzoYuU2wIV6YLKOEoLQVZrODYqfFpJ8fzPCQCJYhe8S3kaMX8gtEb1BihXfNL/KdVaoIq24RppdggHrrVxOfmmwyYHXhkpxl3UBOsWvY/0MUsXMxgMZsf9QB8=
+  file:
+    - release/kv-darwin-amd64
+    - release/kv-darwin-386
+    - release/kv-linux-amd64
+    - release/kv-linux-386
+  skip_cleanup: true
+  on:
+    repo: deepthawtz/kv
+    tags: true
