@@ -1,7 +1,26 @@
+[![Build Status](https://travis-ci.org/deepthawtz/kv.svg?branch=master)](https://travis-ci.org/deepthawtz/kv)
+
 kv
 ==
 
 `kv` is a tiny CLI tool for getting and setting key value pairs from Consul
+
+## Install
+```
+go get -v github.com/deepthawtz/kv
+```
+
+## Configure
+
+create a `$HOME/.kv.yaml` file
+```
+---
+consul:
+  host: myconsulhost.somewhere.com
+  scheme: https
+```
+
+## Examples
 
 ### get
 
