@@ -25,14 +25,13 @@ import (
 )
 
 var (
-	namespace string
-	deployEnv string
+	prefix string
 )
 
 // getCmd represents the get command
 var getCmd = &cobra.Command{
 	Use:   "get [KEY]",
-	Short: "get ENV key values for a give app/namespace",
+	Short: "get ENV key values for a given key prefix (e.g., env/myapp/stage)",
 	Long:  `get all keys or specific KEY if provided`,
 	Run:   Get,
 }
@@ -40,14 +39,13 @@ var getCmd = &cobra.Command{
 func init() {
 	RootCmd.AddCommand(getCmd)
 
-	getCmd.Flags().StringVarP(&namespace, "app", "a", "", "app/namespace to get ENV vars for")
-	getCmd.Flags().StringVarP(&deployEnv, "env", "e", "", "environment to get ENV vars for (e.g., stage, production)")
+	getCmd.Flags().StringVarP(&prefix, "prefix", "p", "", "prefix to get key/values from")
 }
 
 // Get fetches key values
 func Get(cmd *cobra.Command, args []string) {
-	if namespace == "" || deployEnv == "" {
-		fmt.Println("must supply --app and --env")
+	if prefix == "" {
+		fmt.Println("must supply key/value path --prefix")
 		os.Exit(-1)
 	}
 
@@ -72,13 +70,11 @@ func get(client *consul.KV, args ...string) ([]*store.KVPair, error) {
 	)
 
 	if len(args) == 0 {
-		fmt.Println("no args, getting all key/values")
-		k = strings.Join([]string{"env", namespace, deployEnv}, "/")
+		k = prefix
 		kvpairs, _, err = client.List(k, nil)
 	} else {
-		fmt.Println("args, getting just key/value for args")
 		for _, x := range args {
-			k = strings.Join([]string{"env", namespace, deployEnv, x}, "/")
+			k = strings.Join([]string{prefix, x}, "/")
 			kvpair, _, err = client.Get(k, nil)
 			if kvpair != nil {
 				kvpairs = append(kvpairs, kvpair)
@@ -97,7 +93,6 @@ func get(client *consul.KV, args ...string) ([]*store.KVPair, error) {
 			kvs = append(kvs, &store.KVPair{Key: kvp.Key, Value: v})
 		}
 	}
-	fmt.Printf("%d key/values found at %s\n", len(kvs), k)
 
 	return kvs, nil
 }

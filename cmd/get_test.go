@@ -38,30 +38,28 @@ func TestGet(t *testing.T) {
 	c, s := makeClient(t)
 	defer s.Stop()
 	kv := c.KV()
-	kvs, _ := get(kv, "YOOOO")
-	if len(kvs) != 0 {
-		t.Errorf("expected 0 but got %d", len(kvs))
-	}
 
-	namespace = "yo"
-	deployEnv = "stage"
-	k := strings.Join([]string{"env", namespace, deployEnv, "YO"}, "/")
+	prefix = "env/yo/stage"
+	k := strings.Join([]string{prefix, "YO"}, "/")
 	_, _ = kv.Put(&consul.KVPair{Key: k, Value: []byte("123")}, nil)
-	k = strings.Join([]string{"env", namespace, deployEnv, "THING_ID"}, "/")
+	k = strings.Join([]string{prefix, "THING_ID"}, "/")
 	_, _ = kv.Put(&consul.KVPair{Key: k, Value: []byte("abc123")}, nil)
 
-	kvs, _ = get(kv, "YO")
-	if len(kvs) != 1 {
-		t.Errorf("expected 1 but got %d", len(kvs))
+	cases := []struct {
+		args  []string
+		count int
+	}{
+		{args: []string{}, count: 2},
+		{args: []string{"YOOOOOOOOOOOO"}, count: 0},
+		{args: []string{"YO"}, count: 1},
+		{args: []string{"YO", "THING_ID"}, count: 2},
+		{args: []string{"YO", "THING_ID", "EXTRA"}, count: 2},
 	}
 
-	kvs, _ = get(kv, "YO", "THING_ID")
-	if len(kvs) != 2 {
-		t.Errorf("expected 2 but got %d", len(kvs))
-	}
-
-	kvs, _ = get(kv, "YO", "THING_ID", "JUNK")
-	if len(kvs) != 2 {
-		t.Errorf("expected 2 but got %d", len(kvs))
+	for _, test := range cases {
+		kvs, _ := get(kv, test.args...)
+		if len(kvs) != test.count {
+			t.Errorf("expected %d but got %d", test.count, len(kvs))
+		}
 	}
 }

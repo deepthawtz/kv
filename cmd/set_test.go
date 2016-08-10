@@ -22,8 +22,9 @@ func TestPut(t *testing.T) {
 	}
 
 	for _, test := range cases {
-		if err := set(kv, ""); err == nil {
-			t.Errorf("expected %v with arguments (%v) but got: %v", test.output, test.args, err)
+		err := set(kv, test.args...)
+		if (test.output == nil && err != nil) || (test.output != nil && err == nil) {
+			t.Errorf("expected %v with arguments %v but got: %v", test.output, test.args, err)
 		}
 	}
 }
