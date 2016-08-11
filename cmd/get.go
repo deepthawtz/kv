@@ -64,54 +64,54 @@ func Get(cmd *cobra.Command, args []string) {
 
 func get(client *consul.KV, args ...string) ([]*store.KVPair, error) {
 	var (
-		k         string
 		wildcards []string
 		specific  []string
 		kvpairs   consul.KVPairs
-		all       consul.KVPairs
-		kvpair    *consul.KVPair
-		err       error
 	)
 
+	all, _, err := client.List(prefix, nil)
+
+	// filter just the key/values with matching prefix
+	var scoped consul.KVPairs
+	for _, kv := range all {
+		if len(kv.Value) > 0 {
+			p := len(strings.Split(prefix, "/"))
+			k := len(strings.Split(string(kv.Key), "/"))
+			if p == k-1 {
+				scoped = append(scoped, kv)
+			}
+		}
+	}
+
 	if len(args) == 0 {
-		kvpairs, _, err = client.List(prefix, nil)
+		kvpairs = scoped
 	} else {
 		for _, x := range args {
 			if strings.Contains(x, "*") {
+				x = strings.Replace(x, "*", ".*", -1)
 				wildcards = append(wildcards, x)
 			} else {
 				specific = append(specific, x)
 			}
 		}
 
-		if len(wildcards) > 0 {
-			all, _, err = client.List(prefix, nil)
-			for _, wc := range wildcards {
-				wc = strings.Replace(wc, "*", ".*", -1)
-				for _, k := range all {
-					m, err := regexp.MatchString(wc, k.Key)
-					if err != nil {
-						return nil, err
-					}
-					if m {
-						kvpairs = append(kvpairs, k)
-					}
+		for _, wc := range wildcards {
+			for _, k := range scoped {
+				m, err := regexp.MatchString(wc, k.Key)
+				if err != nil {
+					return nil, err
+				}
+				if m {
+					kvpairs = append(kvpairs, k)
 				}
 			}
+		}
 
-			for _, s := range specific {
-				k = strings.Join([]string{prefix, s}, "/")
-				kvpair, _, err = client.Get(k, nil)
-				if kvpair != nil {
-					kvpairs = append(kvpairs, kvpair)
-				}
-			}
-		} else {
-			for _, x := range specific {
-				k = strings.Join([]string{prefix, x}, "/")
-				kvpair, _, err = client.Get(k, nil)
-				if kvpair != nil {
-					kvpairs = append(kvpairs, kvpair)
+		for _, s := range specific {
+			for _, k := range scoped {
+				key := strings.Join([]string{prefix, s}, "/")
+				if key == string(k.Key) {
+					kvpairs = append(kvpairs, k)
 				}
 			}
 		}

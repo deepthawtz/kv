@@ -64,7 +64,13 @@ func TestGet(t *testing.T) {
 	for _, test := range cases {
 		kvs, _ := get(kv, test.args...)
 		if len(kvs) != test.count {
-			t.Errorf("expected %d but got %d", test.count, len(kvs))
+			t.Errorf("expected %d but got %d with %v", test.count, len(kvs), test.args)
 		}
+	}
+
+	prefix = "env"
+	kvs, _ := get(kv, []string{}...)
+	if len(kvs) != 0 {
+		t.Errorf("expected 0 but got %d with not specific enough prefix", len(kvs))
 	}
 }
