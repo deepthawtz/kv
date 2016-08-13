@@ -63,60 +63,13 @@ func Get(cmd *cobra.Command, args []string) {
 }
 
 func get(client *consul.KV, args ...string) ([]*store.KVPair, error) {
-	var (
-		wildcards []string
-		specific  []string
-		kvpairs   consul.KVPairs
-	)
-
 	all, _, err := client.List(prefix, nil)
-
-	// filter just the key/values with matching prefix
-	var scoped consul.KVPairs
-	for _, kv := range all {
-		if len(kv.Value) > 0 {
-			p := len(strings.Split(prefix, "/"))
-			k := len(strings.Split(string(kv.Key), "/"))
-			if p == k-1 {
-				scoped = append(scoped, kv)
-			}
-		}
+	if err != nil {
+		return nil, err
 	}
 
-	if len(args) == 0 {
-		kvpairs = scoped
-	} else {
-		for _, x := range args {
-			if strings.Contains(x, "*") {
-				x = strings.Replace(x, "*", ".*", -1)
-				wildcards = append(wildcards, x)
-			} else {
-				specific = append(specific, x)
-			}
-		}
-
-		for _, wc := range wildcards {
-			for _, k := range scoped {
-				m, err := regexp.MatchString(wc, k.Key)
-				if err != nil {
-					return nil, err
-				}
-				if m {
-					kvpairs = append(kvpairs, k)
-				}
-			}
-		}
-
-		for _, s := range specific {
-			for _, k := range scoped {
-				key := strings.Join([]string{prefix, s}, "/")
-				if key == string(k.Key) {
-					kvpairs = append(kvpairs, k)
-				}
-			}
-		}
-	}
-
+	scoped := scopedKeys(all)
+	kvpairs, err := matchingKVPairs(scoped, args)
 	if err != nil {
 		return nil, err
 	}
@@ -130,4 +83,65 @@ func get(client *consul.KV, args ...string) ([]*store.KVPair, error) {
 	}
 
 	return kvs, nil
+}
+
+func scopedKeys(keys consul.KVPairs) consul.KVPairs {
+	// filter just the key/values with matching prefix
+	var scoped consul.KVPairs
+	for _, kv := range keys {
+		if len(kv.Value) > 0 {
+			p := len(strings.Split(prefix, "/"))
+			k := len(strings.Split(string(kv.Key), "/"))
+			if p == k-1 {
+				scoped = append(scoped, kv)
+			}
+		}
+	}
+	return scoped
+}
+
+// partitionArgs filters args and returns both args containing wildcards
+// and args without wildcards (specific)
+func partitionArgs(args []string) (wildcards []string, specific []string) {
+	for _, x := range args {
+		if strings.Contains(x, "*") {
+			x = strings.Replace(x, "*", ".*", -1)
+			wildcards = append(wildcards, x)
+		} else {
+			specific = append(specific, x)
+		}
+	}
+
+	return wildcards, specific
+}
+
+func matchingKVPairs(scoped consul.KVPairs, args []string) (consul.KVPairs, error) {
+	var kvpairs consul.KVPairs
+	if len(args) == 0 {
+		return scoped, nil
+	}
+
+	wildcards, specific := partitionArgs(args)
+	for _, wc := range wildcards {
+		for _, k := range scoped {
+			m, err := regexp.MatchString(wc, k.Key)
+			if err != nil {
+				return nil, err
+			}
+			if m {
+				kvpairs = append(kvpairs, k)
+			}
+		}
+	}
+
+	for _, s := range specific {
+		for _, k := range scoped {
+			key := strings.Join([]string{prefix, s}, "/")
+			if key == string(k.Key) {
+				kvpairs = append(kvpairs, k)
+			}
+		}
+	}
+
+	return kvpairs, nil
 }
