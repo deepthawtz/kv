@@ -46,3 +46,11 @@ can be performed in a single transaction)
 ```
 kv set --prefix env/myapp/stage YO=123 THING_TOKEN=xcnvbxcmhdf COOL_FACTOR=9000
 ```
+
+### del
+
+delete provided key(s) at a given prefix (*NOTE:* in Consul 0.7 this
+can be performed in a single transaction)
+```
+kv del --prefix env/myapp/stage YO THING_TOKEN COOL_FACTOR
+```
