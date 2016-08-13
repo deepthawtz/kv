@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/deepthawtz/kv/store"
 	consul "github.com/hashicorp/consul/api"
@@ -53,12 +54,19 @@ func Del(cmd *cobra.Command, args []string) {
 }
 
 func del(client *consul.KV, args ...string) error {
+	var wg sync.WaitGroup
 	for _, k := range args {
-		key := strings.Join([]string{prefix, k}, "/")
-		_, err := client.Delete(key, nil)
-		if err != nil {
-			return err
-		}
+		wg.Add(1)
+		go func(k string) {
+			key := strings.Join([]string{prefix, k}, "/")
+			_, err := client.Delete(key, nil)
+			if err != nil {
+				panic(err)
+			}
+			wg.Done()
+		}(k)
 	}
+	wg.Wait()
+
 	return nil
 }

@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/deepthawtz/kv/store"
 	consul "github.com/hashicorp/consul/api"
@@ -63,43 +64,26 @@ func Set(cmd *cobra.Command, args []string) {
 }
 
 func set(client *consul.KV, args ...string) error {
-	// TODO: use txn when using Consul 0.7
-	// var ops []*consul.KVTxnOp
+	var wg sync.WaitGroup
 	for _, raw := range args {
 		parts := strings.Split(raw, "=")
 		if len(parts) != 2 {
 			return fmt.Errorf(help)
 		}
-		k := strings.Join([]string{prefix, parts[0]}, "/")
-		v := parts[1]
-		fmt.Printf("setting %s = %s\n", k, v)
-		if _, err := client.Put(&consul.KVPair{Key: k, Value: []byte(v)}, nil); err != nil {
-			return err
-		}
 
-		// TODO: use txn when using Consul 0.7
-		// ops = append(ops, &consul.KVTxnOp{
-		// 	Verb:  "set",
-		// Key:  fmt.Sprintf("/env/%s/%s/%s", prefix, k),
-		// 	Value: []byte(v),
-		// })
+		wg.Add(1)
+		go func() {
+			k := strings.Join([]string{prefix, parts[0]}, "/")
+			v := parts[1]
+			fmt.Printf("setting %s = %s\n", k, v)
+			if _, err := client.Put(&consul.KVPair{Key: k, Value: []byte(v)}, nil); err != nil {
+				panic(err)
+			}
+			wg.Done()
+		}()
+
+		wg.Wait()
 	}
 
 	return nil
-
-	// TODO: use txn when using Consul 0.7
-	// ops := []*consul.KVTxnOp{
-	// 	&consul.KVTxnOp{
-	// 		Verb: "get",
-	// 		Key:  fmt.Sprintf("/env/%s/%s/%s", prefix, "YO"),
-	// 	},
-	// }
-	// ok, resp, meta, err := kv.Txn(ops, nil)
-	// if err != nil {
-	// 	fmt.Println(err, resp, meta)
-	// 	os.Exit(-1)
-	// }
-	// if ok {
-	// 	fmt.Println(resp)
-	// }
 }
