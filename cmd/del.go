@@ -17,7 +17,7 @@ package cmd
 import (
 	"fmt"
 	"os"
-	"strings"
+	"path"
 	"sync"
 
 	"github.com/deepthawtz/kv/store"
@@ -58,7 +58,7 @@ func del(client *consul.KV, args ...string) error {
 	for _, k := range args {
 		wg.Add(1)
 		go func(k string) {
-			key := strings.Join([]string{prefix, k}, "/")
+			key := path.Join(prefix, k)
 			_, err := client.Delete(key, nil)
 			if err != nil {
 				panic(err)

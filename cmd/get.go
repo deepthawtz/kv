@@ -17,6 +17,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"path"
 	"regexp"
 	"strings"
 
@@ -136,7 +137,7 @@ func matchingKVPairs(scoped consul.KVPairs, args []string) (consul.KVPairs, erro
 
 	for _, s := range specific {
 		for _, k := range scoped {
-			key := strings.Join([]string{prefix, s}, "/")
+			key := path.Join(prefix, s)
 			if key == string(k.Key) {
 				kvpairs = append(kvpairs, k)
 			}
