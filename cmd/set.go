@@ -17,6 +17,7 @@ package cmd
 import (
 	"fmt"
 	"os"
+	"path"
 	"strings"
 	"sync"
 
@@ -73,7 +74,7 @@ func set(client *consul.KV, args ...string) error {
 
 		wg.Add(1)
 		go func() {
-			k := strings.Join([]string{prefix, parts[0]}, "/")
+			k := path.Join(prefix, parts[0])
 			v := parts[1]
 			fmt.Printf("setting %s = %s\n", k, v)
 			if _, err := client.Put(&consul.KVPair{Key: k, Value: []byte(v)}, nil); err != nil {

@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"strings"
+	"path"
 	"testing"
 
 	consul "github.com/hashicorp/consul/api"
@@ -13,7 +13,7 @@ func TestDel(t *testing.T) {
 	kv := c.KV()
 
 	prefix = "env/yo/stage"
-	k := strings.Join([]string{prefix, "YO"}, "/")
+	k := path.Join(prefix, "YO")
 	_, _ = kv.Put(&consul.KVPair{Key: k, Value: []byte("123")}, nil)
 
 	if err := del(kv, []string{"YO"}...); err != nil {

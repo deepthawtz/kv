@@ -1,7 +1,7 @@
 package cmd
 
 import (
-	"strings"
+	"path"
 	"testing"
 
 	consul "github.com/hashicorp/consul/api"
@@ -40,11 +40,11 @@ func TestGet(t *testing.T) {
 	kv := c.KV()
 
 	prefix = "env/yo/stage"
-	k := strings.Join([]string{prefix, "YO"}, "/")
+	k := path.Join(prefix, "YO")
 	_, _ = kv.Put(&consul.KVPair{Key: k, Value: []byte("123")}, nil)
-	k = strings.Join([]string{prefix, "THING_ID"}, "/")
+	k = path.Join(prefix, "THING_ID")
 	_, _ = kv.Put(&consul.KVPair{Key: k, Value: []byte("abc123")}, nil)
-	k = strings.Join([]string{prefix, "THING_TOKEN"}, "/")
+	k = path.Join(prefix, "THING_TOKEN")
 	_, _ = kv.Put(&consul.KVPair{Key: k, Value: []byte("yabbadabba")}, nil)
 
 	cases := []struct {
